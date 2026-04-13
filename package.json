@@ -6,7 +6,8 @@
   "scripts": {
     "changeset": "pnpm exec changeset",
     "syncpack": "pnpm exec syncpack",
-    "format": "pnpm exec prettier"
+    "format": "pnpm exec prettier",
+    "tool": "./tools/cmd/main.sh"
   },
   "keywords": [
     "monitext",
