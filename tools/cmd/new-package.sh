@@ -17,7 +17,7 @@ cmd_new_package() {
     name="$(basename "$target")"
 
     # Create structure
-    mkdir -p "$target"/{src/lib,sketch,test,build}
+    mkdir -p "$target"/{src/lib,sketch/playground,sketch/report,test,build}
     touch "$target/src/main.ts"
 
     # Copy template safely (handles empty dirs, dotfiles)
