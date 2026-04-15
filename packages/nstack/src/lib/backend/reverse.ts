@@ -95,7 +95,7 @@ export function extractReverseResource(
             offset++
         }
 
-        index -= Math.max(1,1+offset);
+        index -= Math.max(1, offset);
     }
 
     const resource = buffer.reverse().join("");

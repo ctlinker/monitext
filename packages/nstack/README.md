@@ -63,6 +63,8 @@ Strictly handles V8-style frames. It ensures structural integrity by matching `(
 * **Safe for:** Paths containing spaces or complex characters.
 * **Fails on:** Nested parentheses (like `eval` stacks) to avoid ambiguous slicing.
 
+> The `parenthesis` backend compose with any other backend in case of nested eval
+
 ### 2. Forward Backend
 
 The "Optimistic" extractor. It looks for **Strong Anchors** at the start of strings:
@@ -230,12 +232,12 @@ Code to produce this sample output can be found on our github : `sketch/playgrou
 
 - Backend: reverse
   Raw: at /path/with spaces/and (parentheses)/file name.ts:9:2
-  Path: /path/wit spaces/an (parentheses)/fil name.ts
+  Path: /path/with spaces/and (parentheses)/file name.ts
   Line/Col: 9:2
 
 - Backend: reverse
   Raw: at /path/with spaces and file name.ts:9:2
-  Path: /path/wit space an fil name.ts
+  Path: /path/with spaces and file name.ts
   Line/Col: 9:2
 
 - Backend: forward
