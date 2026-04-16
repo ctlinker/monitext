@@ -1,45 +1,43 @@
+import { locateCoordinateIn } from '../coord';
 import type { IParse } from '../types';
 
 /**
- * Extracts a resource wrapped in trailing parentheses, for example
- * `method (/tmp/file.ts:10:2)`.
+ * Extracts a resource wrapped in parentheses, including nested eval chains.
  *
- * This backend is intentionally strict: the coordinate must be immediately
- * followed by `)` and the matching `(` must appear before the coordinate span.
- *
- * failOn:
- * - `eval (eval at load (http://host/app.js:10:2), <anonymous>:1:1)`
- *   why: nested parentheses make the captured slice heuristic rather than structurally exact.
- * - `method (/tmp/file.ts:10:2`
- *   why: missing closing `)` means the wrapper shape is incomplete.
+ * Handles:
+ * - method (/tmp/file.ts:10:2)
+ * - eval (eval at load (http://host/app.js:10:2), <anonymous>:1:1)
  */
 export function extractParenthesizedResource(
 	input: IParse.RawInput,
 ): IParse.ExtractedResource | null {
 	const [raw, coord] = input;
-	let shouldReparse = false;
 
-	if (coord == null || raw[coord.endIndex + 1] !== ')') {
-		return null;
-	}
+	if (!coord) return null;
+	if (raw[coord.endIndex + 1] !== ')') return null;
 
-	const closeParenIndex = raw.indexOf(')', coord.endIndex);
-	if (closeParenIndex !== coord.endIndex + 1) {
-		return null;
-	}
+	const closeParenIndex = coord.endIndex + 1;
 
-	const openParenIndex = raw.indexOf('(');
-	if (openParenIndex < 0 || openParenIndex >= coord.startIndex) {
-		return null;
-	}
+	// 🔥 correct structural matching
+	const openParenIndex = findMatchingOpenParen(raw, closeParenIndex);
+	if (openParenIndex < 0) return null;
 
 	let processedResource = raw.slice(openParenIndex + 1, closeParenIndex);
-	if (processedResource.length === 0) {
-		return null;
-	}
+	if (!processedResource.length) return null;
 
-	if (raw.includes('eval') && findBounding(processedResource)) {
-		processedResource = resolveNestedEval(processedResource);
+	let shouldReparse = false;
+	let prerequisite =
+		processedResource.includes('eval') &&
+		processedResource.includes('(') &&
+		processedResource.includes(')');
+
+	// unwrap nested structures
+	const resolved = !prerequisite
+		? processedResource
+		: resolveNested(`(${processedResource})`);
+
+	if (resolved !== processedResource) {
+		processedResource = resolved;
 		shouldReparse = true;
 	} else {
 		processedResource = processedResource.replace(coord.coordStr, '');
@@ -52,26 +50,54 @@ export function extractParenthesizedResource(
 	};
 }
 
-function findBounding(s: string): null | [number, number] {
-	const start = s.indexOf('(');
-	const matches = [...s.matchAll(/:\d+\)/g)];
-	const match = matches.at(-1)?.[0];
-	const end = match ? s.lastIndexOf(match) + match.length - 1 : -1;
-	if (start < 0 || end < 0) {
-		return null;
+/**
+ * Find the matching "(" for a given ")"
+ */
+function findMatchingOpenParen(str: string, closeIndex: number): number {
+	let depth = 0;
+
+	for (let i = closeIndex; i >= 0; i--) {
+		const char = str[i];
+
+		if (char === ')') depth++;
+		else if (char === '(') {
+			depth--;
+			if (depth === 0) return i;
+		}
 	}
 
-	return [start, end];
+	return -1;
 }
 
-function resolveNestedEval(res: string): string {
-	let curResult = res;
+/**
+ * Recursively unwrap nested "(...coord...)" structures
+ */
+function resolveNested(input: string): string {
+	let current = input;
+	let coordinate = '';
+	let getResult = () => current + coordinate;
+
+	console.log('inp:', input);
 
 	while (true) {
-		const bound = findBounding(curResult);
-		if (!bound) {
-			return curResult;
+		const coord = locateCoordinateIn(current);
+		if (!coord) {
+			return getResult();
 		}
-		curResult = curResult.slice(bound[0] + 1, bound[1]);
+
+		const close = coord.endIndex + 1;
+		if (current[close] !== ')') return getResult();
+
+		const open = findMatchingOpenParen(current, close);
+		if (open < 0) return current;
+
+		// slice inside this layer
+		coordinate = coord.coordStr;
+		const next = current.slice(open + 1, coord.startIndex);
+
+		// if nothing changes → stop
+		if (next === current) return getResult();
+
+		current = next;
 	}
 }
