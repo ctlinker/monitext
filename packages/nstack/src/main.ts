@@ -1,4 +1,6 @@
 export {
-    interpretErrorStack,
-    type ParsedStackLine,
-} from "./lib/parse";
+	interpretErrorStack,
+	parseError,
+	type ParsedFrame,
+	type ParsedStackLine,
+} from './lib/parse';

@@ -1,88 +1,75 @@
-import type { IParse } from "../types";
+import type { IParse } from '../types';
+
+// A consolidated "Master" regex for all start patterns.
+// Captures groups: 1: Protocol, 2: Drive, 3: Runtime, 4: Blobs
+const RESOURCE_START_PATTERN =
+	/([a-z][a-z0-9+\-.]*:\/\/)|([a-z]:[\\/])|((?:node|bun|native|rsc|webpack|vite):)|((?:blob|data):)/iy;
 
 /**
- * Extracts a resource by scanning forward for strong, explicit resource starts.
+ * Identifies the start of a resource path by scanning forward from the beginning of a line.
  *
- * This backend is best for protocol and runtime-prefixed resources like
- * `http://`, `file://`, `webpack:///`, `node:`, `bun:`, `native:`,
- * and Windows drive paths.
+ * @description
+ * This function searches for "High-Confidence" entry points (anchors) like protocols,
+ * drive letters, or runtime prefixes. It helps resolve paths that have a clear
+ * starting point but are embedded in complex log lines.
  *
- * failOn:
- * - `/home/user/app.ts:10:2`
- *   why: bare `/` is not treated as a reliable start marker, so Unix paths are intentionally ignored here.
- * - `relative/file.ts:10:2`
- *   why: relative paths do not have a strong enough forward anchor.
+ * **Scoring Hierarchy:**
+ * 1. Virtual URIs (11) - e.g., `blob:`, `data:`
+ * 2. Explicit Protocols (10) - e.g., `http://`, `webpack://`
+ * 3. Windows Drive Paths (9) - e.g., `C:\`, `D:/`
+ * 4. Runtime Prefixes (8) - e.g., `node:`, `bun:`, `vite:`
+ *
+ * @param {IParse.RawInput} input - Tuple containing the raw string and coordinate metadata.
+ * @returns {IParse.ExtractedResource | null} The extracted resource string (from anchor
+ * to coordinate) or null if no valid start pattern is recognized.
  */
 export function extractForwardResource(
-    input: IParse.RawInput
+	input: IParse.RawInput,
 ): IParse.ExtractedResource | null {
-    const [raw, coord] = input;
+	const [raw, coord] = input;
 
-    if (coord == null) {
-        return null;
-    }
+	if (coord == null || coord.startIndex <= 0) {
+		return null;
+	}
 
-    const coordStart = coord.endIndex - coord.coordStr.length + 1;
-    let bestIndex = -1;
-    let bestScore = -1;
+	let bestIndex = -1;
+	let bestScore = -1;
 
-    for (let index = 0; index < coordStart;) {
-         // Remove automatic index++
-        const [score, skip] = scoreResourceStart(raw, index);
-        
-        if (score > bestScore) {
-            bestScore = score;
-            bestIndex = index;
-        }
+	// Reset sticky index
+	RESOURCE_START_PATTERN.lastIndex = 0;
 
-        // Jump ahead by 'skip' or at least 1 to avoid infinite loops
-        index += Math.max(1, skip);
-    }
+	for (let index = 0; index < coord.startIndex; ) {
+		RESOURCE_START_PATTERN.lastIndex = index;
+		const match = RESOURCE_START_PATTERN.exec(raw);
 
-    if (bestIndex < 0 || bestScore < 0) {
-        return null;
-    }
+		if (!match) {
+			index++;
+			continue;
+		}
 
-    const resource = raw.slice(bestIndex, coordStart);
-    if (resource.length === 0) {
-        return null;
-    }
+		let score = 0;
 
-    return {
-        backend: "forward",
-        resource,
-    };
-}
+		// Determine score based on which group matched
+		if (match[4])
+			score = 11; // Blob/Data
+		else if (match[1])
+			score = 10; // Protocol
+		else if (match[2])
+			score = 9; // Windows Drive
+		else if (match[3]) score = 8; // Runtime
 
-/**
- * Scores whether a given character index looks like the start of a resource.
- */
-function scoreResourceStart(line: string, index: number): [number, number] {
-    const remaining = line.slice(index);
+		if (score > bestScore) {
+			bestScore = score;
+			bestIndex = index;
+		}
 
-    // 1. Explicit Protocols (e.g., http://, webpack://)
-    const protocolMatch = remaining.match(/^[a-z][a-z0-9+\-.]*:\/\//i);
-    if (protocolMatch) {
-        return [10, protocolMatch[0].length]; 
-    }
+		// Skip the length of the match
+		index += match[0].length;
+	}
 
-    // 2. Windows Drive Paths (e.g., C:\)
-    if (/^[a-z]:[\\/]/i.test(remaining)) {
-        return [9, 3]; // "C:\" is 3 chars
-    }
+	if (bestIndex < 0) return null;
 
-    // 3. Runtime/Virtual Prefixes (e.g., node:, bun:)
-    const runtimeMatch = remaining.match(/^(node|bun|native|rsc|webpack|vite):/i);
-    if (runtimeMatch) {
-        return [8, runtimeMatch[0].length];
-    }
+	const resource = raw.slice(bestIndex, coord.startIndex);
 
-    // 4. Data/Blob URIs
-    const blobMatch = remaining.match(/^(blob|data):/i);
-    if (blobMatch) {
-        return [7, blobMatch[0].length];
-    }
-
-    // No match: skip 1 char to try the next position
-    return [-1, 1];
+	return resource.length > 0 ? { backend: 'forward', resource } : null;
 }

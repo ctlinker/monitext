@@ -1,6 +1,6 @@
 {
 	"name": "@monitext/nstack",
-	"version": "0.0.1",
+	"version": "0.1.1",
 	"description": "Robust JS stack trace parser with multi-backend heuristics",
 	"type": "commonjs",
 	"main": "./build/main.js",
@@ -23,12 +23,10 @@
 		"LICENSE.txt"
 	],
 	"scripts": {
-		"prepublish": "pnpm run build",
 		"build": "pnpm run test && pnpm run bundle",
 		"bundle": "pnpm exec tsup --format esm,cjs,iife --dts --minify --sourcemap --tsconfig ./tsconfig.build.json  -d build ./src/main.ts",
 		"test": "pnpm exec vitest run",
-		"testing": "pnpm exec vitest",
-		"typecheck": "pnpm exec tsc --noEmit"
+		"testing": "pnpm exec vitest"
 	},
 	"keywords": [
 		"stack-error",

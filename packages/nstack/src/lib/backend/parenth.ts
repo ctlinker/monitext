@@ -1,79 +1,133 @@
-import type { IParse } from "../types";
+import { locateCoordinateIn } from '../coord';
+import type { IParse } from '../types';
 
 /**
- * Extracts a resource wrapped in trailing parentheses, for example
- * `method (/tmp/file.ts:10:2)`.
- *
- * This backend is intentionally strict: the coordinate must be immediately
- * followed by `)` and the matching `(` must appear before the coordinate span.
- *
- * failOn:
- * - `eval (eval at load (http://host/app.js:10:2), <anonymous>:1:1)`
- *   why: nested parentheses make the captured slice heuristic rather than structurally exact.
- * - `method (/tmp/file.ts:10:2`
- *   why: missing closing `)` means the wrapper shape is incomplete.
+ * Extracts resources enclosed in parentheses, with specific support for nested 
+ * structures like 'eval' calls.
+ * 
+ * @description
+ * This function handles cases where a file path and its coordinates are wrapped 
+ * in parentheses. It is particularly robust against "eval chains" where multiple 
+ * layers of source information are nested within each other.
+ * 
+ * **Key Behaviors:**
+ * 1. **Structural Integrity:** Uses a stack-based counting method to find the 
+ *    correct matching opening parenthesis, avoiding errors caused by nested parens.
+ * 2. **Eval Unwrapping:** If the resource contains 'eval', it recursively 
+ *    traverses inward to find the original source file hidden deep in the call stack.
+ * 3. **Coord Stripping:** Removes the coordinate string from the final result 
+ *    to return a clean file path/URL.
+ * 
+ * @param {IParse.RawInput} input - Tuple containing the raw string and coordinate metadata.
+ * @returns {IParse.ExtractedResource | null} A resolution object. If an eval chain 
+ * was unwrapped, `reparse` is set to `true` to trigger a secondary analysis pass.
+ * 
+ * @example
+ * // Standard: "method (/dist/app.js:10:2)" -> "/dist/app.js"
+ * // Nested Eval: "eval at load (http://host/app.js:10:2), <anonymous>:1:1" -> "http://host/app.js"
  */
 export function extractParenthesizedResource(
-    input: IParse.RawInput
+	input: IParse.RawInput,
 ): IParse.ExtractedResource | null {
-    const [raw, coord] = input;
-    let shouldReparse = false;
+	const [raw, coord] = input;
 
-    if (coord == null || raw[coord.endIndex + 1] !== ")") {
-        return null;
-    }
+	if (!coord) return null;
+	if (raw[coord.endIndex + 1] !== ')') return null;
 
-    const coordStart = coord.endIndex - coord.coordStr.length + 1;
-    const closeParenIndex = raw.indexOf(")", coord.endIndex);
-    if (closeParenIndex !== coord.endIndex + 1) {
-        return null;
-    }
+	const closeParenIndex = coord.endIndex + 1;
 
-    const openParenIndex = raw.indexOf("(");
-    if (openParenIndex < 0 || openParenIndex >= coordStart) {
-        return null;
-    }
-    
+	// 🔥 correct structural matching
+	const openParenIndex = findMatchingOpenParen(raw, closeParenIndex);
+	if (openParenIndex < 0) return null;
 
-    let processedResource = raw.slice(openParenIndex+1, closeParenIndex);
-    if (processedResource.length === 0) {
-        return null;
-    }
+	let processedResource = raw.slice(openParenIndex + 1, closeParenIndex);
+	if (!processedResource.length) return null;
 
-    if(raw.includes("eval") && findBounding(processedResource)) {
-        processedResource = resolveNestedEval(processedResource)
-        shouldReparse = true
-    } else {
-        processedResource = processedResource.replace(coord.coordStr, "")
-    }
+	let shouldReparse = false;
+	let prerequisite =
+		processedResource.includes('eval') &&
+		processedResource.includes('(') &&
+		processedResource.includes(')');
 
-    return {
-        backend: "parenthesis",
-        reparse: shouldReparse,
-        resource: processedResource,
-    };
+	// unwrap nested structures
+	const resolved = prerequisite
+		? resolveNested(`(${processedResource})`)
+		: processedResource;
+
+	if (resolved === processedResource) {
+		processedResource = processedResource.replace(coord.coordStr, '');
+	} else {
+		processedResource = resolved;
+		shouldReparse = true;
+	}
+
+	return {
+		backend: 'parenthesis',
+		reparse: shouldReparse,
+		resource: processedResource,
+	};
 }
 
-function findBounding(s: string): null | [number, number] {
-    const start = s.indexOf("(");
-    const matches = [...s.matchAll(/:\d+\)/g)];
-    const match = matches.at(-1)?.[0];
-    const end = match ? (s.lastIndexOf(match) + match.length - 1) : -1;
-    if (start < 0 || end < 0){
-        return null
-    }
+/**
+ * Implements a reverse-scanning balance algorithm to find the start of a 
+ * parenthesized block.
+ * 
+ * @param {string} str - The string to scan.
+ * @param {number} closeIndex - The index of the known closing parenthesis.
+ * @returns {number} The index of the matching opening parenthesis, or -1 if unbalanced.
+ */
+function findMatchingOpenParen(str: string, closeIndex: number): number {
+	let depth = 0;
 
-    return [start, end]
+	for (let i = closeIndex; i >= 0; i--) {
+		const char = str[i];
+
+		if (char === ')') depth++;
+		else if (char === '(') {
+			depth--;
+			if (depth === 0) return i;
+		}
+	}
+
+	return -1;
 }
 
-function resolveNestedEval(res: string): string {
-    let curResult = res;
+/**
+ * Recursively unwraps nested structures to locate the inner-most resource.
+ * 
+ * @description
+ * In stack traces like `eval at (source.js:1:1), <anonymous>:2:2`, the "true" 
+ * source is the one inside the nested parenthesis. This function iteratively 
+ * peels back layers of wrapping until no further coordinates or parentheses 
+ * can be resolved.
+ * 
+ * @param {string} input - The string potentially containing nested source definitions.
+ * @returns {string} The inner-most resolved resource string.
+ */
+function resolveNested(input: string): string {
+	let current = input;
+	let coordinate = '';
+	let getResult = () => current + coordinate;
 
-    while(true) {
-        const bound = findBounding(curResult);
-        if (!bound) {
-            return curResult
-        }
-        curResult = curResult.slice(bound[0]+1, bound[1])
-    }
+	while (true) {
+		const coord = locateCoordinateIn(current);
+		if (!coord) {
+			return getResult();
+		}
+
+		const close = coord.endIndex + 1;
+		if (current[close] !== ')') return getResult();
+
+		const open = findMatchingOpenParen(current, close);
+		if (open < 0) return current;
+
+		// slice inside this layer
+		coordinate = coord.coordStr;
+		const next = current.slice(open + 1, coord.startIndex);
+
+		// if nothing changes → stop
+		if (next === current) return getResult();
+
+		current = next;
+	}
 }
