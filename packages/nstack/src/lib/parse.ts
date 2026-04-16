@@ -19,6 +19,36 @@ export function interpretErrorStack(raw: Error): IParse.ParsedStackLine[] {
 	return lines.map((line) => parseStackLine(line));
 }
 
+export function parseError(raw: Error): IParse.ParsedFrame[] {
+	const stack = typeof raw.stack === 'string' ? raw.stack : '';
+	const lines = normalizeStackLines(stack);
+	return lines.map((line) => {
+		const curr = parseStackLine(line);
+
+		if (curr.processed == false)
+			return {
+				raw: curr.raw,
+				path: null,
+				line: null,
+				column: null,
+				resolvedBy: null,
+				transforms: [] as IParse.Backend[],
+			};
+
+		const transforms =
+			curr.backend.length == 1 ? [] : curr.backend.slice(0, curr.backend.length - 1);
+
+		return {
+			raw: curr.raw,
+			path: curr.resource,
+			line: curr.coord.line,
+			column: curr.coord.column,
+			resolvedBy: curr.backend.at(-1)!,
+			transforms,
+		};
+	});
+}
+
 function parseStackLine(rawLine: string): IParse.ParsedStackLine {
 	const input: IParse.RawInput = [rawLine, locateCoordinateIn(rawLine)];
 

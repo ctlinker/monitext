@@ -77,8 +77,6 @@ function resolveNested(input: string): string {
 	let coordinate = '';
 	let getResult = () => current + coordinate;
 
-	console.log('inp:', input);
-
 	while (true) {
 		const coord = locateCoordinateIn(current);
 		if (!coord) {

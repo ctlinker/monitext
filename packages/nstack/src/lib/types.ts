@@ -11,6 +11,16 @@ export namespace IParse {
 
 	export type Backend = 'forward' | 'reverse' | 'parenthesis' | 'extension';
 
+	export type ParsedFrame = {
+		raw: string;
+		path: string | null;
+		line: number | null;
+		column: number | null;
+
+		resolvedBy: string | null;
+		transforms: string[];
+	};
+
 	export type ExtractedResource = {
 		backend: Backend;
 		resource: string;

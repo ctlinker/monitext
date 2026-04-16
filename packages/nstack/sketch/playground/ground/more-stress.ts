@@ -1,9 +1,6 @@
-import { interpretErrorStack } from '@/main';
+import { playGround } from '../play';
 
-try {
-	const err = new Error('Something went wrong');
-	err.stack = `
-    Error: Something went wrong
+playGround.parseError(`Error: Something went wrong
 
         at Object.<anonymous> (/home/cat/dev/project/src/index.ts:12:5)
         at Module._compile (node:internal/modules/cjs/loader:1256:14)
@@ -23,7 +20,7 @@ try {
 
         at blob:https://example.com/3f1c9d2a-aaaa-bbbb-cccc-ddddeeeeffff:23:7
 
-        at eval (eval at <anonymous> (/home/cat/dev/project/src/eval.ts:10:3), <anonymous>:1:1)
+        at eval (eval at <anonymous> (/home/cat/dev/project/src/eval), <anonymous>:1:1)
         at eval (eval at run (C:\\dev\\app\\runner.js:22:5), <anonymous>:5:10)
 
         at new Function (<anonymous>)
@@ -56,34 +53,5 @@ try {
         at node:internal/main/run_main_module:23:47
 
         at <anonymous>
-        eval (eval at processJob (eval at bootstrap (eval at c (/home/cat/dev/project/src/eval.ts:10:3), <anonymous>:1:1), worker.js:5:2), runner.js:12:8)
-    `.trim();
-
-	throw err;
-} catch (err) {
-	const stack = interpretErrorStack(err as Error);
-
-	stack.forEach((line) => {
-		if (line.processed) {
-			const chain = Array.isArray(line.backend) ? line.backend : [line.backend];
-
-			const final = chain.at(-1);
-			const transforms = chain.slice(0, -1);
-
-			console.log(`- Backend: ${chain.join(',')}`);
-			console.log(`  Raw: ${line.raw}`);
-			console.log(`  Path: ${line.resource}`);
-			console.log(`  Line/Col: ${line.coord.line}:${line.coord.column}`);
-
-			if (transforms.length) {
-				console.log(`  Via: ${transforms.join(' -> ')}`);
-			}
-
-			console.log(`  Resolved by: ${final}`);
-		} else {
-			console.warn(`- Unparsed line: ${line.raw}`);
-		}
-
-		console.log('');
-	});
-}
+        eval (eval at processJob (eval at bootstrap (eval at c (/home/cat/dev/project/src/eval.ts:13), <anonymous>:1:1), worker.js:5:2), runner.js:12:8)
+    `);
