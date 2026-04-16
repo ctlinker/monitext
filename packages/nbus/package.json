@@ -1,0 +1,45 @@
+{
+	"name": "@monitext/nbus",
+	"version": "0.0.0",
+	"description": "Even Driven plugin library",
+	"type": "commonjs",
+	"main": "./build/main.js",
+	"module": "./build/main.mjs",
+	"types": "./build/main.d.ts",
+	"exports": {
+		".": {
+			"types": "./build/main.d.ts",
+			"import": "./build/main.mjs",
+			"require": "./build/main.js"
+		},
+		"./src": "./src",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src",
+		"build",
+		"package.json",
+		"CHANGELOG.md",
+		"LICENSE.txt"
+	],
+	"scripts": {
+		"prepublish": "pnpm run build",
+		"build": "pnpm run test && pnpm run bundle",
+		"bundle": "pnpm exec tsup --format esm,cjs,iife --minify --dts --sourcemap --tsconfig ./tsconfig.build.json  -d build ./src/main.ts",
+		"test": "pnpm exec vitest",
+		"testing": "pnpm exec vitest"
+	},
+	"keywords": [],
+	"author": {
+		"name": "Chatelin",
+		"email": "linkeris404@gmail.com",
+		"url": "https://github.com/ctlinker"
+	},
+	"repository": {
+		"url": "https://github.com/ctlinker/monitext.git",
+		"directory": "package/nbus",
+		"type": "git"
+	},
+	"license": "Apache-2.0",
+	"packageManager": "pnpm@10.28.1"
+}
