@@ -9,7 +9,7 @@ export namespace IParse {
 
 	export type RawInput = [raw: string, coord: RawCoordinate];
 
-	export type Backend = 'forward' | 'reverse' | 'parenthesis';
+	export type Backend = 'forward' | 'reverse' | 'parenthesis' | 'extension';
 
 	export type ExtractedResource = {
 		backend: Backend;
