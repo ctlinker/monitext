@@ -1,4 +1,4 @@
-import type { IParse } from "../types";
+import type { IParse } from '../types';
 
 /**
  * Extracts a resource by walking backward from the coordinate span.
@@ -61,58 +61,58 @@ import type { IParse } from "../types";
  * @returns Extracted resource string or null if invalid
  */
 export function extractReverseResource(
-    input: IParse.RawInput
+	input: IParse.RawInput,
 ): IParse.ExtractedResource | null {
-    const [raw, coord] = input;
+	const [raw, coord] = input;
 
-    if (coord == null) {
-        return null;
-    }
-    const buffer: string[] = []
-    const coordStart = coord.endIndex - coord.coordStr.length + 1;
-    const startAnchor = findFirstAnchor(raw)
+	if (coord == null) {
+		return null;
+	}
+	const buffer: string[] = [];
+	const startAnchor = findFirstAnchor(raw);
 
-    if (startAnchor === -1) 
-        for (let index = coordStart - 1; index >= 0; index--) {
-            let curr = raw[index]!;
-            if (curr == " ") break;
-            buffer.push(curr)
-        }
-    else for (let index = coordStart - 1; index >= 0;) {
-        let curr = raw[index]!;
+	if (startAnchor === -1)
+		for (let index = coord.startIndex - 1; index >= 0; index--) {
+			let curr = raw[index]!;
+			if (curr == ' ') break;
+			buffer.push(curr);
+		}
+	else
+		for (let index = coord.startIndex - 1; index >= 0; ) {
+			let curr = raw[index]!;
 
-        if(curr != " ") {
-            buffer.push(curr);
-            index--;
-            continue
-        } else if (index < startAnchor) {
-            break
-        }
-        
-        let offset = 0;
-        while (raw[index - offset] == " ") {
-            buffer.push(raw[index - offset]!)
-            offset++
-        }
+			if (curr != ' ') {
+				buffer.push(curr);
+				index--;
+				continue;
+			} else if (index < startAnchor) {
+				break;
+			}
 
-        index -= Math.max(1, offset);
-    }
+			let offset = 0;
+			while (raw[index - offset] == ' ') {
+				buffer.push(raw[index - offset]!);
+				offset++;
+			}
 
-    const resource = buffer.reverse().join("");
-    if (
-        resource.length === 0 ||
-        (!/\w+\.\w/.test(resource) && !/[\/\\.:]/.test(resource))
-    ) {
-        return null;
-    }
+			index -= Math.max(1, offset);
+		}
 
-    return { backend: "reverse", resource }
+	const resource = buffer.reverse().join('');
+	if (
+		resource.length === 0 ||
+		(!/\w+\.\w/.test(resource) && !/[\/\\.:]/.test(resource))
+	) {
+		return null;
+	}
+
+	return { backend: 'reverse', resource };
 }
 
 function findFirstAnchor(raw: string, from: number = 0) {
-    for (let i = from; i <= raw.length - 1; i++) {
-        const c = raw[i];
-        if (c === "/" || c === "\\") return i;
-    }
-    return -1;
+	for (let i = from; i <= raw.length - 1; i++) {
+		const c = raw[i];
+		if (c === '/' || c === '\\') return i;
+	}
+	return -1;
 }

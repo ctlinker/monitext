@@ -1,4 +1,4 @@
-import type { IParse } from "../types";
+import type { IParse } from '../types';
 
 /**
  * Extracts a resource by scanning forward for strong, explicit resource starts.
@@ -14,75 +14,74 @@ import type { IParse } from "../types";
  *   why: relative paths do not have a strong enough forward anchor.
  */
 export function extractForwardResource(
-    input: IParse.RawInput
+	input: IParse.RawInput,
 ): IParse.ExtractedResource | null {
-    const [raw, coord] = input;
+	const [raw, coord] = input;
 
-    if (coord == null) {
-        return null;
-    }
+	if (coord == null) {
+		return null;
+	}
 
-    const coordStart = coord.endIndex - coord.coordStr.length + 1;
-    let bestIndex = -1;
-    let bestScore = -1;
+	let bestIndex = -1;
+	let bestScore = -1;
 
-    for (let index = 0; index < coordStart;) {
-         // Remove automatic index++
-        const [score, skip] = scoreResourceStart(raw, index);
-        
-        if (score > bestScore) {
-            bestScore = score;
-            bestIndex = index;
-        }
+	for (let index = 0; index < coord.startIndex; ) {
+		// Remove automatic index++
+		const [score, skip] = scoreResourceStart(raw, index);
 
-        // Jump ahead by 'skip' or at least 1 to avoid infinite loops
-        index += Math.max(1, skip);
-    }
+		if (score > bestScore) {
+			bestScore = score;
+			bestIndex = index;
+		}
 
-    if (bestIndex < 0 || bestScore < 0) {
-        return null;
-    }
+		// Jump ahead by 'skip' or at least 1 to avoid infinite loops
+		index += Math.max(1, skip);
+	}
 
-    const resource = raw.slice(bestIndex, coordStart);
-    if (resource.length === 0) {
-        return null;
-    }
+	if (bestIndex < 0 || bestScore < 0) {
+		return null;
+	}
 
-    return {
-        backend: "forward",
-        resource,
-    };
+	const resource = raw.slice(bestIndex, coord.startIndex);
+	if (resource.length === 0) {
+		return null;
+	}
+
+	return {
+		backend: 'forward',
+		resource,
+	};
 }
 
 /**
  * Scores whether a given character index looks like the start of a resource.
  */
 function scoreResourceStart(line: string, index: number): [number, number] {
-    const remaining = line.slice(index);
+	const remaining = line.slice(index);
 
-    // 1. Explicit Protocols (e.g., http://, webpack://)
-    const protocolMatch = remaining.match(/^[a-z][a-z0-9+\-.]*:\/\//i);
-    if (protocolMatch) {
-        return [10, protocolMatch[0].length]; 
-    }
+	// 1. Explicit Protocols (e.g., http://, webpack://)
+	const protocolMatch = remaining.match(/^[a-z][a-z0-9+\-.]*:\/\//i);
+	if (protocolMatch) {
+		return [10, protocolMatch[0].length];
+	}
 
-    // 2. Windows Drive Paths (e.g., C:\)
-    if (/^[a-z]:[\\/]/i.test(remaining)) {
-        return [9, 3]; // "C:\" is 3 chars
-    }
+	// 2. Windows Drive Paths (e.g., C:\)
+	if (/^[a-z]:[\\/]/i.test(remaining)) {
+		return [9, 3]; // "C:\" is 3 chars
+	}
 
-    // 3. Runtime/Virtual Prefixes (e.g., node:, bun:)
-    const runtimeMatch = remaining.match(/^(node|bun|native|rsc|webpack|vite):/i);
-    if (runtimeMatch) {
-        return [8, runtimeMatch[0].length];
-    }
+	// 3. Runtime/Virtual Prefixes (e.g., node:, bun:)
+	const runtimeMatch = remaining.match(/^(node|bun|native|rsc|webpack|vite):/i);
+	if (runtimeMatch) {
+		return [8, runtimeMatch[0].length];
+	}
 
-    // 4. Data/Blob URIs
-    const blobMatch = remaining.match(/^(blob|data):/i);
-    if (blobMatch) {
-        return [7, blobMatch[0].length];
-    }
+	// 4. Data/Blob URIs
+	const blobMatch = remaining.match(/^(blob|data):/i);
+	if (blobMatch) {
+		return [7, blobMatch[0].length];
+	}
 
-    // No match: skip 1 char to try the next position
-    return [-1, 1];
+	// No match: skip 1 char to try the next position
+	return [-1, 1];
 }
