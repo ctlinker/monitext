@@ -9,7 +9,12 @@ export namespace IParse {
 
 	export type RawInput = [raw: string, coord: RawCoordinate];
 
-	export type Backend = 'forward' | 'reverse' | 'parenthesis' | 'extension';
+	export type Backend =
+		| 'forward'
+		| 'reverse'
+		| 'parenthesis'
+		| 'extension'
+		| 'single-file';
 
 	export type ParsedFrame = {
 		raw: string;

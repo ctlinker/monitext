@@ -2,6 +2,7 @@ import { extractExtensionBasedResource } from './backend/extension';
 import { extractForwardResource } from './backend/forward';
 import { extractParenthesizedResource } from './backend/parenth';
 import { extractReverseResource } from './backend/reverse';
+import { extractSingleFileResource } from './backend/single-file';
 import { locateCoordinateIn } from './coord';
 import type { IParse } from './types';
 
@@ -10,6 +11,7 @@ const resourceExtractors: IParse.ResourceExtractor[] = [
 	extractParenthesizedResource,
 	extractForwardResource,
 	extractReverseResource,
+	extractSingleFileResource,
 ];
 
 export function interpretErrorStack(raw: Error): IParse.ParsedStackLine[] {
