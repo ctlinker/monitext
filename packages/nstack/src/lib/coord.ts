@@ -1,10 +1,10 @@
 import type { IParse } from './types';
 
 export function locateCoordinateIn(line: string): IParse.RawCoordinate {
-	const matches = [...line.matchAll(/:(\d+|\?|NaN)(?:\:(\d+|\?|NaN))?(?=$|\s|\))/g)];
+	const matches = [...line.matchAll(/:(\d+|\?|NaN)(?::(\d+|\?|NaN))?(?=$|\s|\))/g)];
 	const lastMatch = matches.at(-1);
 
-	if (lastMatch == null || lastMatch.index == null) {
+	if (lastMatch?.index == null) {
 		return null;
 	}
 

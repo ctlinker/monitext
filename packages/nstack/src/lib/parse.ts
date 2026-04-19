@@ -27,7 +27,7 @@ export function parseError(raw: Error): IParse.ParsedFrame[] {
 	return lines.map((line) => {
 		const curr = parseStackLine(line);
 
-		if (curr.processed == false)
+		if (!curr.processed)
 			return {
 				raw: curr.raw,
 				path: null,
@@ -37,8 +37,7 @@ export function parseError(raw: Error): IParse.ParsedFrame[] {
 				transforms: [] as IParse.Backend[],
 			};
 
-		const transforms =
-			curr.backend.length == 1 ? [] : curr.backend.slice(0, curr.backend.length - 1);
+		const transforms = curr.backend.length == 1 ? [] : curr.backend.slice(0, -1);
 
 		return {
 			raw: curr.raw,
@@ -52,35 +51,37 @@ export function parseError(raw: Error): IParse.ParsedFrame[] {
 }
 
 function parseStackLine(rawLine: string): IParse.ParsedStackLine {
+	let maxReparse = 5;
+	const backends: IParse.Backend[] = [];
 	const input: IParse.RawInput = [rawLine, locateCoordinateIn(rawLine)];
 
-	let maxReparse = 5;
-	let parseCount = 0;
-	const backend: IParse.Backend[] = [];
+	for (let tryCount = 0; tryCount < maxReparse; tryCount++) {
+		let found = false;
+		for (const currentBackend of resourceExtractors) {
+			const result = currentBackend(input);
+			if (!result) continue;
 
-	for (let index = 0; index <= resourceExtractors.length - 1; index++) {
-		const result = resourceExtractors[index]!(input);
-		if (result == null) {
-			continue;
+			backends.push(result.backend);
+
+			if (result?.reparse) {
+				input[0] = result.resource;
+				input[1] = locateCoordinateIn(result.resource);
+				found = true;
+				break;
+			}
+
+			return {
+				backend: backends,
+				processed: true,
+				raw: rawLine,
+				resource: result.resource,
+				coord: input[1]!,
+			};
 		}
 
-		backend.push(result.backend);
-
-		if (result?.reparse == true && parseCount < maxReparse) {
-			input[0] = result.resource;
-			input[1] = locateCoordinateIn(result.resource);
-			parseCount++;
-			index = 0;
-			continue;
+		if (!found) {
+			break;
 		}
-
-		return {
-			backend,
-			processed: true,
-			raw: rawLine,
-			resource: result.resource,
-			coord: input[1]!,
-		};
 	}
 
 	return {
@@ -112,3 +113,4 @@ function looksLikeKnownErrorHeader(line: string): boolean {
 }
 
 export type ParsedStackLine = IParse.ParsedStackLine;
+export type ParsedFrame = IParse.ParsedFrame;

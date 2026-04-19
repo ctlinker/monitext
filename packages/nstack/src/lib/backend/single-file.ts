@@ -3,7 +3,7 @@ import type { IParse } from '../types';
 const EXT = '(?:js|ts|tsx|jsx|cjs|mjs|mts|cts|json|node|map|d.ts)';
 
 const regex = new RegExp(
-	`(^|\\s)(?:\\()?([a-zA-Z_\\-0-9]+\\.${EXT})(?:\\))?(\\s|$)`,
+	String.raw`(^|\s)(?:\()?([a-zA-Z_\-0-9]+\.${EXT})(?:\))?(\s|$)`,
 	'g',
 );
 
@@ -12,14 +12,14 @@ export function extractSingleFileResource(
 ): IParse.ExtractedResource | null {
 	const [raw] = input;
 
-	if (/[\/\\]/.test(raw)) {
+	if (/[/\\]/.test(raw)) {
 		return null;
 	}
 
 	const matches = [...raw.matchAll(regex)];
 	const match = matches.at(-1);
 
-	if (!match || match.index == null) {
+	if (match?.index == null) {
 		return null;
 	}
 
