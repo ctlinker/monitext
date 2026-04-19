@@ -17,4 +17,7 @@ for b in $PROTECTED_BRANCHES; do
   fi
 done
 
+echo "✔ Yes you can !"
+echo ""
+
 exit 0
