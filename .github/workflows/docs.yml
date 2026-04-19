@@ -17,10 +17,14 @@ permissions:
   pages: write
   id-token: write
 
-jobs:
+jobs:  
+
   build:
     runs-on: ubuntu-latest
-
+    
+    env:
+      REPO_NAME: ${{ github.event.repository.name }}
+      
     steps:
       - uses: actions/checkout@v4
 

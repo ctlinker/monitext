@@ -127,14 +127,16 @@ function generateNav() {
 	return nav;
 }
 
+const repoName = process.env.REPO_NAME ?? 'monitext';
+
 export default defineConfig({
 	title: 'Monitext.Docs',
 	description: 'Documentation for the Monitext ecosystem',
-	base: process.env.NODE_ENV === 'production' ? '/monitext/' : '/',
+	base: process.env.NODE_ENV === 'production' ? `/${repoName}/` : '/',
 	themeConfig: {
 		nav: generateNav(),
 		sidebar: generateSidebar(),
-		socialLinks: [{ icon: 'github', link: 'https://github.com/ctlinker/monitext' }],
+		socialLinks: [{ icon: 'github', link: `https://github.com/ctlinker/${repoName}` }],
 	},
 	rewrites: generateRewrites(),
 });
