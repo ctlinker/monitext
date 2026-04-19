@@ -56,11 +56,17 @@ function generateSidebar() {
 		for (const ver of versions) {
 			const pkgPath = `/${pkg}/${ver}/`;
 			const latestPath = `/${pkg}/latest/`;
+			const verDir = path.join(pkgBaseDir, pkg, 'src', ver);
 
 			const items: any[] = [
 				{
 					text: 'Getting Started',
-					items: [{ text: 'Quick Start', link: `${pkgPath}index` }],
+					items: [
+						{ text: 'Quick Start', link: `${pkgPath}index` },
+						...(fs.existsSync(path.join(verDir, 'changelog.md'))
+							? [{ text: 'Changelog', link: `${pkgPath}changelog` }]
+							: []),
+					],
 				},
 			];
 
@@ -77,10 +83,9 @@ function generateSidebar() {
 			}
 
 			// Try to find more files in the version directory
-			const verDir = path.join(pkgBaseDir, pkg, 'src', ver);
 			const files = fs
 				.readdirSync(verDir)
-				.filter((f) => f.endsWith('.md') && f !== 'index.md');
+				.filter((f) => f.endsWith('.md') && f !== 'index.md' && f !== 'changelog.md');
 
 			if (files.length > 0) {
 				items.push({

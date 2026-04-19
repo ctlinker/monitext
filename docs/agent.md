@@ -40,12 +40,14 @@ The VitePress configuration dynamically discovers packages and versions.
 - Documentation uses standard Markdown.
 - Sidebars are dynamic, so adding a new `.md` file to a version directory will automatically add it to the "Guides" section of the sidebar for that version.
 
-### Syncing READMEs
+### Syncing READMEs and CHANGELOGs
 
-The `packages/*/README.md` files are intended to be used as "Quick Start" guides. When a new version is released:
+The `packages/*/README.md` and `packages/*/CHANGELOG.md` files are used as documentation entry points. The `docs/scripts/sync-latest.js` script handles this automatically:
 
-1. Copy `packages/<pkg>/README.md` to `docs/packages/<pkg>/src/<version>/index.md`.
-2. This ensures the main landing page for each package version stays in sync with the package's primary entry point.
+1. `README.md` is synced to `index.md` (Quick Start).
+2. `CHANGELOG.md` is synced to `changelog.md` (Changelog).
+
+These files are automatically detected and added to the "Getting Started" section of the sidebar.
 
 ## Dynamic Features
 
