@@ -1,0 +1,4 @@
+echo "[+] Checking: Can you commit here ?"
+pnpm run tool can-you-commit-here
+echo "[+] Running Prettier"
+pnpm exec lint-staged
