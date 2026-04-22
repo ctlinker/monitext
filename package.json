@@ -1,7 +1,7 @@
 {
 	"homepage": "https://ctlinker.github.io/monitext/",
 	"name": "@monitext/monorepo",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Monitext aim to be an all in one monitoring solution for js/ts based applications.",
 	"private": true,
 	"scripts": {

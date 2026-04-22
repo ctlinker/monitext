@@ -27,7 +27,8 @@
 		"build": "pnpm run test && pnpm run bundle",
 		"bundle": "pnpm exec tsup --format esm,cjs,iife --minify --dts --sourcemap --tsconfig ./tsconfig.build.json  -d build ./src/main.ts",
 		"test": "pnpm exec vitest",
-		"testing": "pnpm exec vitest"
+		"testing": "pnpm exec vitest",
+		"typecheck": "pnpm exec tsc --noEmit"
 	},
 	"keywords": [
 		"try-catch",
