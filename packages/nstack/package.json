@@ -1,51 +1,51 @@
 {
-  "name": "@monitext/nstack",
-  "version": "0.0.1",
-  "description": "Robust JS stack trace parser with multi-backend heuristics",
-  "type": "commonjs",
-  "main": "./build/main.js",
-  "module": "./build/main.mjs",
-  "types": "./build/main.d.ts",
-  "exports": {
-    ".": {
-      "types": "./build/main.d.ts",
-      "import": "./build/main.mjs",
-      "require": "./build/main.js"
-    },
-    "./src": "./src",
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "src",
-    "build",
-    "package.json",
-    "CHANGELOG.md",
-    "LICENSE.txt"
-  ],
-  "scripts": {
-    "build": "pnpm run test && pnpm run bundle",
-    "bundle": "pnpm exec tsup --format esm,cjs,iife --dts --minify --sourcemap --tsconfig ./tsconfig.build.json  -d build ./src/main.ts",
-    "test": "pnpm exec vitest run",
-    "testing": "pnpm exec vitest"
-  },
-  "keywords": [
-    "stack-error",
-    "parser",
-    "error-parser",
-    "error",
-    "javascrypt",
-    "typescript"
-  ],
-  "author": {
-    "name": "Chatelin",
-    "email": "linkeris404@gmail.com",
-    "url": "https://github.com/ctlinker"
-  },
-  "repository": {
-    "url": "https://github.com/ctlinker/monitext.git",
-    "directory": "package/nstack",
-    "type": "git"
-  },
-  "license": "Apache-2.0",
-  "packageManager": "pnpm@10.28.1"
+	"name": "@monitext/nstack",
+	"version": "0.1.0",
+	"description": "Robust JS stack trace parser with multi-backend heuristics",
+	"type": "commonjs",
+	"main": "./build/main.js",
+	"module": "./build/main.mjs",
+	"types": "./build/main.d.ts",
+	"exports": {
+		".": {
+			"types": "./build/main.d.ts",
+			"import": "./build/main.mjs",
+			"require": "./build/main.js"
+		},
+		"./src": "./src",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src",
+		"build",
+		"package.json",
+		"CHANGELOG.md",
+		"LICENSE.txt"
+	],
+	"scripts": {
+		"build": "pnpm run test && pnpm run bundle",
+		"bundle": "pnpm exec tsup --format esm,cjs,iife --dts --minify --sourcemap --tsconfig ./tsconfig.build.json  -d build ./src/main.ts",
+		"test": "pnpm exec vitest run",
+		"testing": "pnpm exec vitest"
+	},
+	"keywords": [
+		"stack-error",
+		"parser",
+		"error-parser",
+		"error",
+		"javascrypt",
+		"typescript"
+	],
+	"author": {
+		"name": "Chatelin",
+		"email": "linkeris404@gmail.com",
+		"url": "https://github.com/ctlinker"
+	},
+	"repository": {
+		"url": "https://github.com/ctlinker/monitext.git",
+		"directory": "package/nstack",
+		"type": "git"
+	},
+	"license": "Apache-2.0",
+	"packageManager": "pnpm@10.28.1"
 }
