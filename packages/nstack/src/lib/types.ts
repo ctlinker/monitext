@@ -46,5 +46,7 @@ export namespace IParse {
 				processed: false;
 				raw: string;
 				coord: RawCoordinate;
+				resource: null;
+				backend: [];
 		  };
 }
