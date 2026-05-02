@@ -1,7 +1,7 @@
 import type { IParse } from './types';
 
 export function locateCoordinateIn(line: string): IParse.RawCoordinate {
-	const matches = [...line.matchAll(/:(\d+|\?|NaN)(?::(\d+|\?|NaN))?(?=$|\s|\))/g)];
+	const matches = [...line.matchAll(/:(\d+|\?|null)(?::(\d+|\?|null))?(?=$|\s|\))/g)];
 	const lastMatch = matches.at(-1);
 
 	if (lastMatch?.index == null) {
@@ -20,7 +20,7 @@ export function locateCoordinateIn(line: string): IParse.RawCoordinate {
 }
 
 function parseCoordinatePart(value: string | undefined): number | null {
-	if (value == null || value === '?') {
+	if (value == null || value == '?' || value == "null") {
 		return null;
 	}
 

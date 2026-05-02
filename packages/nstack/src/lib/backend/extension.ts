@@ -86,7 +86,7 @@ export function extensionBasedPathResolution(input: IParse.RawInput): IParse.Ext
 	for (let i = 0; i < raw.length; i++) {
 		buffer.push(raw[i] as string);
 		if (ExtEndIndexes.has(i)) {
-			buffer.push(":null:null");
+			buffer.push(":?:?");
 		}
 	}
 
@@ -134,7 +134,7 @@ export function singleFileExtensionBasedPathResolution(input: IParse.RawInput): 
 	// Use the callback version of replace to avoid the double-injection bug
 	// and to handle all matches in a single pass.
 	const resource = raw.replaceAll(SINGLE_FILE_WITH_EXTENSION, (match) => {
-		return `${match}:null:null`;
+		return `${match}:?:?`;
 	});
 
 	return {
