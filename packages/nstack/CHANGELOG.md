@@ -1,5 +1,11 @@
 # @monitext/nstack
 
+## 0.1.1
+
+### Patch Changes
+
+- fixed minor bug in `forward` path extraction backend: "blob" protocol shadowed by "http" like
+
 ## 0.1.0
 
 ### Minor Changes

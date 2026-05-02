@@ -1,6 +1,6 @@
 {
 	"name": "@monitext/nstack",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Robust JS stack trace parser with multi-backend heuristics",
 	"type": "commonjs",
 	"main": "./build/main.js",
