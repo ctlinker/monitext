@@ -2,11 +2,29 @@ import { locateCoordinateIn } from '../coord';
 import type { IParse } from '../types';
 
 /**
- * Extracts a resource wrapped in parentheses, including nested eval chains.
- *
- * Handles:
- * - method (/tmp/file.ts:10:2)
- * - eval (eval at load (http://host/app.js:10:2), <anonymous>:1:1)
+ * Extracts resources enclosed in parentheses, with specific support for nested 
+ * structures like 'eval' calls.
+ * 
+ * @description
+ * This function handles cases where a file path and its coordinates are wrapped 
+ * in parentheses. It is particularly robust against "eval chains" where multiple 
+ * layers of source information are nested within each other.
+ * 
+ * **Key Behaviors:**
+ * 1. **Structural Integrity:** Uses a stack-based counting method to find the 
+ *    correct matching opening parenthesis, avoiding errors caused by nested parens.
+ * 2. **Eval Unwrapping:** If the resource contains 'eval', it recursively 
+ *    traverses inward to find the original source file hidden deep in the call stack.
+ * 3. **Coord Stripping:** Removes the coordinate string from the final result 
+ *    to return a clean file path/URL.
+ * 
+ * @param {IParse.RawInput} input - Tuple containing the raw string and coordinate metadata.
+ * @returns {IParse.ExtractedResource | null} A resolution object. If an eval chain 
+ * was unwrapped, `reparse` is set to `true` to trigger a secondary analysis pass.
+ * 
+ * @example
+ * // Standard: "method (/dist/app.js:10:2)" -> "/dist/app.js"
+ * // Nested Eval: "eval at load (http://host/app.js:10:2), <anonymous>:1:1" -> "http://host/app.js"
  */
 export function extractParenthesizedResource(
 	input: IParse.RawInput,
@@ -32,15 +50,15 @@ export function extractParenthesizedResource(
 		processedResource.includes(')');
 
 	// unwrap nested structures
-	const resolved = !prerequisite
-		? processedResource
-		: resolveNested(`(${processedResource})`);
+	const resolved = prerequisite
+		? resolveNested(`(${processedResource})`)
+		: processedResource;
 
-	if (resolved !== processedResource) {
+	if (resolved === processedResource) {
+		processedResource = processedResource.replace(coord.coordStr, '');
+	} else {
 		processedResource = resolved;
 		shouldReparse = true;
-	} else {
-		processedResource = processedResource.replace(coord.coordStr, '');
 	}
 
 	return {
@@ -51,7 +69,12 @@ export function extractParenthesizedResource(
 }
 
 /**
- * Find the matching "(" for a given ")"
+ * Implements a reverse-scanning balance algorithm to find the start of a 
+ * parenthesized block.
+ * 
+ * @param {string} str - The string to scan.
+ * @param {number} closeIndex - The index of the known closing parenthesis.
+ * @returns {number} The index of the matching opening parenthesis, or -1 if unbalanced.
  */
 function findMatchingOpenParen(str: string, closeIndex: number): number {
 	let depth = 0;
@@ -70,7 +93,16 @@ function findMatchingOpenParen(str: string, closeIndex: number): number {
 }
 
 /**
- * Recursively unwrap nested "(...coord...)" structures
+ * Recursively unwraps nested structures to locate the inner-most resource.
+ * 
+ * @description
+ * In stack traces like `eval at (source.js:1:1), <anonymous>:2:2`, the "true" 
+ * source is the one inside the nested parenthesis. This function iteratively 
+ * peels back layers of wrapping until no further coordinates or parentheses 
+ * can be resolved.
+ * 
+ * @param {string} input - The string potentially containing nested source definitions.
+ * @returns {string} The inner-most resolved resource string.
  */
 function resolveNested(input: string): string {
 	let current = input;
