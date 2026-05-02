@@ -1,7 +1,8 @@
 import { playGround } from '../play';
 
-playGround.parseError(`Error: Something went wrong
-
+playGround.parseError(String.raw`
+    Error: Something went wrong
+    
         at Object.<anonymous> (/home/cat/dev/project/src/index.ts:12:5)
         at Module._compile (node:internal/modules/cjs/loader:1256:14)
         at Module._extensions..js (node:internal/modules/cjs/loader:1310:10)
@@ -9,8 +10,8 @@ playGround.parseError(`Error: Something went wrong
         at run (/var/www/app/dist/server.js:88:23)
         at processTicksAndRejections (node:internal/process/task_queues:96:5)
 
-        at C:\\Users\\cat\\Desktop\\test project\\app.js:42:13
-        at Object.<anonymous> (C:\\Program Files\\nodejs\\node_modules\\lib\\index.js:10:2)
+        at C:\Users\cat\Desktop\test project\app.js:42:13
+        at Object.<anonymous> (C:\Program Files\nodejs\node_modules\lib\index.js:10:2)
 
         at fetchData (https://example.com/api/client.js:120:17)
         at async main (https://cdn.example.com/bundle.min.js:1:9932)
@@ -21,7 +22,7 @@ playGround.parseError(`Error: Something went wrong
         at blob:https://example.com/3f1c9d2a-aaaa-bbbb-cccc-ddddeeeeffff:23:7
 
         at eval (eval at <anonymous> (/home/cat/dev/project/src/eval), <anonymous>:1:1)
-        at eval (eval at run (C:\\dev\\app\\runner.js:22:5), <anonymous>:5:10)
+        at eval (eval at run (C:\dev\app\runner.js:22:5), <anonymous>:5:10)
 
         at new Function (<anonymous>)
         at Function.executeUserCode (node:vm:132:12)
@@ -42,11 +43,11 @@ playGround.parseError(`Error: Something went wrong
         at /path/with spaces/and (parentheses)/file name.ts:9:2
 
         at /path/with spaces and file name.ts:9:2
-        at C:\\path with spaces\\file (copy).js:100:20
+        at C:\path with spaces\file (copy).js:100:20
 
         at mixed://protocol/that/isnt/real:12:34
         at /trailing/colon/path.ts:
-        at C:\\weird\\windows\\path.js:
+        at C:\weird\windows\path.js:
         at index.ts:22
 
         at internal/process/execution.js:80:27
