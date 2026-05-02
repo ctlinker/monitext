@@ -60,7 +60,7 @@ function scoreResourceStart(line: string, index: number): [number, number] {
 	const remaining = line.slice(index);
 
 	// 1. Explicit Protocols (e.g., http://, webpack://)
-	const protocolMatch = remaining.match(/^[a-z][a-z0-9+\-.]*:\/\//i);
+	const protocolMatch = /^[a-z][a-z0-9+\-.]*:\/\//i.exec(remaining);
 	if (protocolMatch) {
 		return [10, protocolMatch[0].length];
 	}
@@ -71,13 +71,13 @@ function scoreResourceStart(line: string, index: number): [number, number] {
 	}
 
 	// 3. Runtime/Virtual Prefixes (e.g., node:, bun:)
-	const runtimeMatch = remaining.match(/^(node|bun|native|rsc|webpack|vite):/i);
+	const runtimeMatch = /^(node|bun|native|rsc|webpack|vite):/i.exec(remaining);
 	if (runtimeMatch) {
 		return [8, runtimeMatch[0].length];
 	}
 
 	// 4. Data/Blob URIs
-	const blobMatch = remaining.match(/^(blob|data):/i);
+	const blobMatch = /^(blob|data):/i.exec(remaining);
 	if (blobMatch) {
 		return [7, blobMatch[0].length];
 	}
